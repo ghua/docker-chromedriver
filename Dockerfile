@@ -3,16 +3,21 @@ MAINTAINER Rob Cherry
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+ARG USER_NAME=automation
+ARG GROUP_NAME=automation
+ARG HOME_DIR=/home/automation
 
 # Set timezone
 RUN echo "US/Eastern" > /etc/timezone && \
     dpkg-reconfigure --frontend noninteractive tzdata
 
 # Create a default user
-RUN groupadd --system automation && \
-    useradd --system --create-home --gid automation --groups audio,video automation && \
-    mkdir --parents /home/automation/reports && \
-    chown --recursive automation:automation /home/automation
+RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} && \
+    useradd --uid ${USER_ID} --gid ${GROUP_ID} --home-dir ${HOME_DIR} --create-home --groups audio,video ${USER_NAME} && \
+    mkdir --parents ${HOME_DIR}/reports && \
+    chown --recursive ${USER_NAME}:${GROUP_NAME} ${HOME_DIR}
 
 
 # Update the repositories
@@ -52,6 +57,9 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
 # Configure Supervisor
 ADD ./etc/supervisord.conf /etc/
 ADD ./etc/supervisor /etc/supervisor
+
+WORKDIR ${HOME_DIR}
+USER ${USER_NAME}
 
 # Default configuration
 ENV DISPLAY :20.0
