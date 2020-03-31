@@ -27,12 +27,22 @@ RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} && \
 # Install fonts
 # Install Python
 RUN apt-get -yqq update && \
-    apt-get -yqq install gnupg2 && \
-    apt-get -yqq install curl unzip && \
+    apt-get -yqq install gnupg2 apt-transport-https && \
+    apt-get -yqq install curl unzip git && \
     apt-get -yqq install xvfb tinywm && \
     apt-get -yqq install fonts-ipafont-gothic xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic && \
     apt-get -yqq install python && \
     apt-get -yqq install x11vnc && \
+    apt-get -yqq install build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    curl -sL https://deb.nodesource.com/setup_13.x | bash - && \
+    apt-get -yqq update && \
+    apt-get -yqq install nodejs && \
+    apt-get -yqq install yarn && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Supervisor
@@ -48,6 +58,15 @@ RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RE
     chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver && \
     ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
 
+# Build ember inspector
+RUN git clone -b 'v3.13.2' https://github.com/emberjs/ember-inspector.git /tmp/ember-inspector && \
+    cd /tmp/ember-inspector && \
+    yarn install && \
+    yarn global add ember-cli && \
+    yarn build && \
+    cp -R /tmp/ember-inspector/dist/chrome /opt/ember-inspector && \
+    rm -Rf /tmp/ember-inspector
+
 # Install Google Chrome
 RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
@@ -61,6 +80,8 @@ ADD ./etc/supervisor /etc/supervisor
 
 WORKDIR ${HOME_DIR}
 USER ${USER_NAME}
+
+COPY --chown=${USER_ID}:${GROUP_ID} . ${HOME_DIR}
 
 # Default configuration
 ENV DISPLAY :20.0
