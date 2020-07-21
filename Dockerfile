@@ -59,6 +59,8 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
 ADD ./etc/supervisord.conf /etc/
 ADD ./etc/supervisor /etc/supervisor
 
+RUN chmod a+x -Rf /etc/supervisor/bin
+
 WORKDIR ${HOME_DIR}
 USER ${USER_NAME}
 
