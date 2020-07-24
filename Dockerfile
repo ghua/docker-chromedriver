@@ -8,6 +8,7 @@ ARG GROUP_ID=1000
 ARG USER_NAME=automation
 ARG GROUP_NAME=automation
 ARG HOME_DIR=/home/automation
+ARG WEBSOCKIFY_TAG='v0.9.0'
 
 # Set timezone
 RUN echo "US/Eastern" > /etc/timezone && \
@@ -28,10 +29,10 @@ RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} && \
 # Install Python
 RUN apt-get -yqq update && \
     apt-get -yqq install gnupg2 && \
-    apt-get -yqq install curl unzip && \
+    apt-get -yqq install git curl unzip && \
     apt-get -yqq install xvfb tinywm && \
     apt-get -yqq install fonts-ipafont-gothic xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic && \
-    apt-get -yqq install python && \
+    apt-get -yqq install python python-numpy && \
     apt-get -yqq install x11vnc && \
     rm -rf /var/lib/apt/lists/*
 
@@ -55,6 +56,9 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
     apt-get -yqq install google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
+# Install websockify
+RUN git clone --branch ${WEBSOCKIFY_TAG} --depth 1 https://github.com/novnc/websockify /usr/local/websockify
+
 # Configure Supervisor
 ADD ./etc/supervisord.conf /etc/
 ADD ./etc/supervisor /etc/supervisor
@@ -66,15 +70,18 @@ USER ${USER_NAME}
 
 # Default configuration
 ENV DISPLAY :20.0
-ENV SCREEN_GEOMETRY "1280x1024x24"
+ENV SCREEN_GEOMETRY "1280x1024"
+ENV XVFB_SCREEN_GEOMETRY "${SCREEN_GEOMETRY}x24"
 ENV CHROMEDRIVER_PORT 4444
 ENV CHROMEDRIVER_WHITELISTED_IPS "127.0.0.1"
 ENV CHROMEDRIVER_URL_BASE ''
 ENV CHROMEDRIVER_EXTRA_ARGS ''
 ENV X11VNC_PASSWORD 'secret'
-ENV X11VNC_EXTRA_OPTIONS '-shared -forever -loop30 -geometry 1280x1024 -http_oneport'
+ENV X11VNC_EXTRA_OPTIONS "-shared -forever -loop30 -geometry $SCREEN_GEOMETRY -http_oneport"
+ENV WEBSOCKIFY_PORT 8081
+ENV WEBSOCKIFY_ARGS "$WEBSOCKIFY_PORT 127.0.0.1:5900"
 
-EXPOSE 4444
+EXPOSE 4444 5900 8081
 
 VOLUME [ "/var/log/supervisor" ]
 
