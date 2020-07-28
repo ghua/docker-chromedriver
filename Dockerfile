@@ -66,6 +66,9 @@ ADD ./etc/supervisor /etc/supervisor
 RUN chmod a+x -Rf /etc/supervisor/bin
 
 WORKDIR ${HOME_DIR}
+
+RUN ln -sf /proc/1/fd/1 /var/log/container.log
+
 USER ${USER_NAME}
 
 # Default configuration
