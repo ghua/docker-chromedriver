@@ -3,6 +3,7 @@ MAINTAINER Rob Cherry
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
+ENV CONKY_DISPLAY_STRING "not set"
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG USER_NAME=automation
@@ -33,7 +34,7 @@ RUN apt-get -yqq update && \
     apt-get -yqq install xvfb tinywm && \
     apt-get -yqq install fonts-ipafont-gothic xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic && \
     apt-get -yqq install python python-numpy && \
-    apt-get -yqq install x11vnc && \
+    apt-get -yqq install x11vnc xfonts-terminus conky&& \
     rm -rf /var/lib/apt/lists/*
 
 # Install Supervisor
@@ -62,6 +63,7 @@ RUN git clone --branch ${WEBSOCKIFY_TAG} --depth 1 https://github.com/novnc/webs
 # Configure Supervisor
 ADD ./etc/supervisord.conf /etc/
 ADD ./etc/supervisor /etc/supervisor
+ADD ./etc/conky.conf /etc/conky.conf
 
 RUN chmod a+x -Rf /etc/supervisor/bin
 
